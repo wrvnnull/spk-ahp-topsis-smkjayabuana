@@ -1,0 +1,48 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+.cache/
+.vite/
+
+# NestJS
+dist/
+logs/
+*.log
+
+# Prisma ORM
+prisma/*.db
+prisma/*.db-journal
+prisma/.env
+.prisma/
+
+# Environment — RACIK ULANG DARI .env.example SETIAP INSTALASI BARU
+.env
+.env.local
+.env.*.local
+
+# Build output & distribusi
+*.tar.gz
+*.zip
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary
+tmp/
+temp/
