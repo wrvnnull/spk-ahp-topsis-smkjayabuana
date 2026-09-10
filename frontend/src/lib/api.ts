@@ -4,18 +4,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
 
 class ApiClient {
   private baseUrl: string
-  private token: string | null = null
 
   constructor() {
     this.baseUrl = API_BASE.replace(/\/+$/, "")
-  }
-
-  setToken(token: string | null) {
-    this.token = token
-  }
-
-  getToken(): string | null {
-    return this.token
   }
 
   private async request<T>(
@@ -26,10 +17,6 @@ class ApiClient {
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-    }
-
-    if (this.token) {
-      headers["Authorization"] = `Bearer ${this.token}`
     }
 
     const response = await fetch(url, {

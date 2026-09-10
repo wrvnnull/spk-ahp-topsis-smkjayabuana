@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useAuth } from "@/hooks/useAuthContext"
+import { useRequireAuth } from "@/hooks/useAuthContext"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 const roleLabels: Record<string, string> = {
@@ -11,7 +11,7 @@ const roleLabels: Record<string, string> = {
 }
 
 export default function DashboardPage() {
-  const { user, isLoading } = useAuth()
+  const { isLoading } = useRequireAuth()
 
   if (isLoading) {
     return (
@@ -24,19 +24,12 @@ export default function DashboardPage() {
     )
   }
 
-  if (!user) {
-    return null
-  }
-
-  const roleLabel = roleLabels[user.role] || user.role
-
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground">
-          Selamat datang, {user.name}. Anda login sebagai{" "}
-          <span className="font-medium text-primary">{roleLabel}</span>.
+          Selamat datang di SPK AHP-TOPSIS. Sistem Penunjang Keputusan Menentukan Siswa Berprestasi.
         </p>
       </div>
 
@@ -112,10 +105,6 @@ export default function DashboardPage() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Status Backend:</span>
               <span className="text-green-600 font-medium">Online</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Role Anda:</span>
-              <span className="font-medium">{roleLabel}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Periode Akhir:</span>

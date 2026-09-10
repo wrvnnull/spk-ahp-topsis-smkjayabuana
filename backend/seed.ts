@@ -102,13 +102,15 @@ async function main() {
   // Buat akun RBAC
   console.log('[INFO] Membuat akun RBAC...\n');
 
-  const passwordHash = await bcrypt.hash(CONFIG.ADMIN_PASSWORD, 10);
+  const adminPasswordHash = await bcrypt.hash(CONFIG.ADMIN_PASSWORD, 10);
+  const guruPasswordHash = await bcrypt.hash(CONFIG.GURU_PASSWORD, 10);
+  const kepsekPasswordHash = await bcrypt.hash(CONFIG.KEPsek_PASSWORD, 10);
 
   const admin = await prisma.user.create({
     data: {
       email: CONFIG.dummyData.admin.email,
       name: CONFIG.dummyData.admin.name,
-      password_hash: passwordHash,
+      password_hash: adminPasswordHash,
       role: Role.SUPER_ADMIN,
     },
   });
@@ -118,7 +120,7 @@ async function main() {
     data: {
       email: CONFIG.dummyData.guru.email,
       name: CONFIG.dummyData.guru.name,
-      password_hash: passwordHash,
+      password_hash: guruPasswordHash,
       role: Role.GURU,
     },
   });
@@ -128,7 +130,7 @@ async function main() {
     data: {
       email: CONFIG.dummyData.kepsek.email,
       name: CONFIG.dummyData.kepsek.name,
-      password_hash: passwordHash,
+      password_hash: kepsekPasswordHash,
       role: Role.KEPALA_SEKOLAH,
     },
   });
