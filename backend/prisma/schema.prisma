@@ -1,0 +1,261 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUM: Role Sistem
+// ============================================
+enum Role {
+  SUPER_ADMIN
+  GURU
+  KEPALA_SEKOLAH
+}
+
+// ============================================
+// ENUM: Jenis Kriteria (Benefit / Cost)
+// ============================================
+enum CriteriaType {
+  BENEFIT
+  COST
+}
+
+// ============================================
+// ENUM: Semester (Ganjil / Genap)
+// ============================================
+enum Semester {
+  GANJIL
+  GENAP
+}
+
+// ============================================
+// Tabel: users
+// ============================================
+model User {
+  id            String   @id @default(uuid()) // UUID
+  email         String   @unique
+  password_hash String
+  name          String
+  role          Role
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  // Relation: Guru punya banyak kelas (wali_teacher_id)
+  classesWali ClassRoom[] @relation("WaliTeacherClasses")
+
+  // Relations: created_by untuk berbagai tabel
+  auditLogs          AuditLog[]          @relation("AuditLogCreatedBy")
+  ahpComparisons     AhpComparison[]     @relation("AhpCompCreatedBy")
+  ahpCalculations    AhpCalculation[]    @relation("AhpCalcCreatedBy")
+  topsisCalculations TopsisCalculation[] @relation("TopsisCalcCreatedBy")
+  scoresCreated      Score[]             @relation("ScoreCreatedBy")
+
+  @@map("users")
+}
+
+// ============================================
+// Tabel: academic_periods
+// ============================================
+model AcademicPeriod {
+  id          String   @id @default(uuid()) // UUID
+  name        String
+  school_year String
+  semester    Semester // GANJIL / GENAP
+  is_active   Boolean  @default(false)
+  created_at  DateTime @default(now())
+  // tidak ada updated_at dalam rancangan final
+
+  // Relations
+  classes            ClassRoom[]
+  ahpComparisons     AhpComparison[]
+  ahpCalculations    AhpCalculation[]
+  scores             Score[]
+  topsisCalculations TopsisCalculation[]
+
+  @@map("academic_periods")
+}
+
+// ============================================
+// Tabel: classes
+// ============================================
+model ClassRoom {
+  id                 String   @id @default(uuid()) // UUID
+  name               String
+  academic_period_id String
+  wali_teacher_id    String
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  academicPeriod AcademicPeriod @relation(fields: [academic_period_id], references: [id])
+  waliTeacher    User           @relation("WaliTeacherClasses", fields: [wali_teacher_id], references: [id])
+  students       Student[]
+
+  @@unique([name, academic_period_id])
+  @@map("classes")
+}
+
+// ============================================
+// Tabel: students
+// ============================================
+// PENTING: students TIDAK memiliki academic_period_id
+// Periode diturunkan melalui: students.class_id -> classes.id -> classes.academic_period_id
+model Student {
+  id           String   @id @default(uuid()) // UUID
+  class_id     String
+  student_code String? // NULLABLE, unique hanya dalam kelas (lihat @@unique di bawah)
+  name         String
+  is_active    Boolean  @default(true)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  class  ClassRoom @relation(fields: [class_id], references: [id])
+  scores Score[]
+
+  @@unique([class_id, student_code])
+  @@map("students")
+}
+
+// ============================================
+// Tabel: criteria
+// ============================================
+model Criteria {
+  id          String       @id @default(uuid()) // UUID
+  code        String       @unique
+  name        String
+  type        CriteriaType
+  is_active   Boolean      @default(true)
+  description String? // nullable
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  // Relations: N:M via 2 FK ke ahp_comparisons
+  comparisonsAsI AhpComparison[] @relation("AhpCompCriteriaI")
+  comparisonsAsJ AhpComparison[] @relation("AhpCompCriteriaJ")
+  scores         Score[]
+
+  @@map("criteria")
+}
+
+// ============================================
+// Tabel: ahp_comparisons
+// ============================================
+model AhpComparison {
+  id                 String   @id @default(uuid()) // UUID
+  academic_period_id String
+  criteria_i_id      String
+  criteria_j_id      String
+  comparison_value   Float
+  created_by         String
+  created_at         DateTime @default(now())
+
+  academicPeriod AcademicPeriod @relation(fields: [academic_period_id], references: [id])
+  criteriaI      Criteria       @relation("AhpCompCriteriaI", fields: [criteria_i_id], references: [id])
+  criteriaJ      Criteria       @relation("AhpCompCriteriaJ", fields: [criteria_j_id], references: [id])
+  createdByUser  User           @relation("AhpCompCreatedBy", fields: [created_by], references: [id])
+
+  @@unique([academic_period_id, criteria_i_id, criteria_j_id])
+  @@map("ahp_comparisons")
+}
+
+// ============================================
+// Tabel: scores
+// ============================================
+// PENTING: memiliki academic_period_id eksplisit untuk historical/reproducibility
+// UNIQUE: (student_id, criteria_id, academic_period_id)
+model Score {
+  id                 String   @id @default(uuid()) // UUID
+  student_id         String
+  criteria_id        String
+  academic_period_id String
+  value              Float
+  is_missing         Boolean  @default(false)
+  note               String?
+  created_by         String
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  student        Student        @relation(fields: [student_id], references: [id])
+  criteria       Criteria       @relation(fields: [criteria_id], references: [id])
+  academicPeriod AcademicPeriod @relation(fields: [academic_period_id], references: [id])
+  createdByUser  User           @relation("ScoreCreatedBy", fields: [created_by], references: [id])
+
+  @@unique([student_id, criteria_id, academic_period_id])
+  @@map("scores")
+}
+
+// ============================================
+// Tabel: ahp_calculations
+// ============================================
+// weight_vector: JSONB, NOT NULL
+// FK: academic_period_id, created_by
+model AhpCalculation {
+  id                 String   @id @default(uuid()) // UUID
+  academic_period_id String
+  calculated_at      DateTime @default(now())
+  ci                 Float
+  cr                 Float
+  ri                 Float
+  weight_vector      Json // JSONB, NOT NULL
+  is_valid           Boolean  @default(false)
+  created_by         String
+
+  academicPeriod     AcademicPeriod      @relation(fields: [academic_period_id], references: [id])
+  createdByUser      User                @relation("AhpCalcCreatedBy", fields: [created_by], references: [id])
+  topsisCalculations TopsisCalculation[]
+
+  @@map("ahp_calculations")
+}
+
+// ============================================
+// Tabel: topsis_calculations
+// ============================================
+// Semua kolom JSONB: NULLABLE
+// FK: academic_period_id, ahp_calculation_id, created_by
+// UNIQUE: (academic_period_id, ahp_calculation_id)
+model TopsisCalculation {
+  id                 String   @id @default(uuid()) // UUID
+  academic_period_id String
+  ahp_calculation_id String
+  calculated_at      DateTime @default(now())
+  decision_matrix    Json? // JSONB, NULL
+  normalized_matrix  Json? // JSONB, NULL
+  weighted_matrix    Json? // JSONB, NULL
+  ideal_positive     Json? // JSONB, NULL
+  ideal_negative     Json? // JSONB, NULL
+  distance_positive  Json? // JSONB, NULL
+  distance_negative  Json? // JSONB, NULL
+  preference_value   Json? // JSONB, NULL
+  rank               Json? // JSONB, NULL
+  created_by         String
+
+  academicPeriod AcademicPeriod @relation(fields: [academic_period_id], references: [id])
+  ahpCalculation AhpCalculation @relation(fields: [ahp_calculation_id], references: [id])
+  createdByUser  User           @relation("TopsisCalcCreatedBy", fields: [created_by], references: [id])
+
+  @@unique([academic_period_id, ahp_calculation_id])
+  @@map("topsis_calculations")
+}
+
+// ============================================
+// Tabel: audit_logs
+// ============================================
+// Field final: user_id, user_name, action, resource_type, resource_id, details, ip_address, created_at
+model AuditLog {
+  id            String   @id @default(uuid()) // UUID
+  user_id       String
+  user_name     String
+  action        String
+  resource_type String
+  resource_id   String?
+  details       Json?
+  ip_address    String?
+  created_at    DateTime @default(now())
+
+  user User @relation("AuditLogCreatedBy", fields: [user_id], references: [id])
+
+  @@map("audit_logs")
+}
