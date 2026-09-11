@@ -1,25 +1,101 @@
-version: "3.9"
+# =============================================================================
+# Docker Compose - SPK AHP-TOPSIS
+# =============================================================================
+# Stack lengkap untuk local development/demo:
+#   - db: PostgreSQL 16 (Alpine)
+#   - backend: NestJS API
+#   - frontend: Next.js App
+#
+# Jalankan:
+#   docker compose up -d
+#
+# Environment variables:
+#   Salin .env.example ke .env dan sesuaikan jika perlu.
+#   Backend otomatis melakukan migration dan seed saat pertama kali start.
+#   Semua credential default adalah VALUE PEMANGGIL - ganti sebelum production.
+# =============================================================================
 
 services:
+  # ==========================================================================
+  # Database: PostgreSQL 16 Alpine
+  # ==========================================================================
   db:
     image: postgres:16-alpine
     container_name: spk-ahp-topsis-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: spk_ahp_topsis
-      POSTGRES_USER: spk_admin
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-ChangeMeImmediate123!}
+      POSTGRES_DB: ${DB_NAME:-spk_ahp_topsis}
+      POSTGRES_USER: ${DB_USER:-spk_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U spk_admin -d spk_ahp_topsis"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-spk_admin} -d ${DB_NAME:-spk_ahp_topsis}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - spk-network
+
+  # ==========================================================================
+  # Backend: NestJS API
+  # ==========================================================================
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: production
+    container_name: spk-ahp-topsis-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME:-spk_ahp_topsis}?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+      SEED_GURU_PASSWORD: ${SEED_GURU_PASSWORD}
+      SEED_KEPSK_PASSWORD: ${SEED_KEPSK_PASSWORD}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3001,http://localhost:3000}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ["/app/backend/docker-entrypoint.sh"]
+    networks:
+      - spk-network
+
+  # ==========================================================================
+  # Frontend: Next.js App
+  # ==========================================================================
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: production
+    container_name: spk-ahp-topsis-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3001
+    ports:
+      - "${FRONTEND_PORT:-3001}:3001"
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - spk-network
 
 volumes:
   pgdata:
     name: spk-ahp-topsis-pgdata
+
+networks:
+  spk-network:
+    driver: bridge

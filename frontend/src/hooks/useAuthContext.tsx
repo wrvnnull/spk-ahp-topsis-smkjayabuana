@@ -1,6 +1,13 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from "react"
 import type { User } from "@/types/api"
 import { apiClient } from "@/lib/api"
 import { useRouter } from "next/navigation"
@@ -17,20 +24,13 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-function getInitialUser(): User | null {
-  if (typeof window === "undefined") return null
-  const stored = localStorage.getItem("spk_user")
-  if (!stored) return null
-  try {
-    return JSON.parse(stored)
-  } catch {
-    localStorage.removeItem("spk_user")
-    return null
-  }
+function useInitialUser(): User | null {
+  // Hapus localStorage, gunakan cookie saja
+  return null
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(getInitialUser)
+  const [user, setUser] = useState<User | null>(useInitialUser)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
@@ -41,11 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const currentUser = await apiClient.getMe()
         setUser(currentUser)
         setIsAuthenticated(true)
-        localStorage.setItem("spk_user", JSON.stringify(currentUser))
       } catch {
         setUser(null)
         setIsAuthenticated(false)
-        localStorage.removeItem("spk_user")
       } finally {
         setIsLoading(false)
       }
@@ -58,9 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     try {
       const response = await apiClient.login({ email, password })
-      setUser(response.user)
+      setUser(response)
       setIsAuthenticated(true)
-      localStorage.setItem("spk_user", JSON.stringify(response.user))
     } finally {
       setIsLoading(false)
     }
@@ -74,7 +71,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setUser(null)
     setIsAuthenticated(false)
-    localStorage.removeItem("spk_user")
   }, [])
 
   const refreshSession = useCallback(async () => {
@@ -83,11 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const currentUser = await apiClient.getMe()
       setUser(currentUser)
       setIsAuthenticated(true)
-      localStorage.setItem("spk_user", JSON.stringify(currentUser))
     } catch {
       setUser(null)
       setIsAuthenticated(false)
-      localStorage.removeItem("spk_user")
     } finally {
       setIsLoading(false)
     }
@@ -101,7 +95,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isAuthenticated, login, logout, refreshSession, hasRole }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, isAuthenticated, login, logout, refreshSession, hasRole }}
+    >
       {children}
     </AuthContext.Provider>
   )

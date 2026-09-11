@@ -1,14 +1,14 @@
 #!/usr/bin/env ts-node
 /**
  * seed.ts - Database Seeder untuk SPK AHP-TOPSIS (SAFE FOR PUBLIC REPO)
- * 
+ *
  * Fitur:
  * - Menggunakan data dummy/anonymized (tidak ada data siswa asli)
  * - Tidak membaca file Excel dari path sensitif
  * - Tidak hard-code password; menggunakan env var atau generate random
  * - 100% kompatibel dengan schema.prisma aktual
  * - IDEMPOTENT: bisa dijalankan berulang tanpa error
- * 
+ *
  * Jalankan: npx ts-node seed.ts
  */
 
@@ -26,21 +26,21 @@ const prisma = new PrismaClient({
 const CONFIG = {
   ADMIN_PASSWORD: process.env.SEED_ADMIN_PASSWORD || crypto.randomBytes(12).toString('hex'),
   GURU_PASSWORD: process.env.SEED_GURU_PASSWORD || crypto.randomBytes(12).toString('hex'),
-  KEPsek_PASSWORD: process.env.SEED_KEPsek_PASSWORD || crypto.randomBytes(12).toString('hex'),
-  
+  KEPSK_PASSWORD: process.env.SEED_KEPSK_PASSWORD || crypto.randomBytes(12).toString('hex'),
+
   dummyData: {
     admin: { email: process.env.SEED_ADMIN_EMAIL || 'admin@contoh.sch.id', name: 'Super Admin' },
     guru: { email: process.env.SEED_GURU_EMAIL || 'guru@contoh.sch.id', name: 'Guru Wali Kelas' },
-    kepsek: { email: process.env.SEED_KEPsek_EMAIL || 'kepsek@contoh.sch.id', name: 'Kepala Sekolah' },
+    kepsek: { email: process.env.SEED_KEPSK_EMAIL || 'kepsek@contoh.sch.id', name: 'Kepala Sekolah' },
   },
-  
+
   criteria: [
     { code: 'C1', name: 'Pengetahuan', type: CriteriaType.BENEFIT },
     { code: 'C2', name: 'PRAKERIN', type: CriteriaType.BENEFIT },
     { code: 'C3', name: 'Ketidakhadiran', type: CriteriaType.COST },
     { code: 'C4', name: 'Ekstrakurikuler', type: CriteriaType.BENEFIT },
   ],
-  
+
   dummyStudents: {
     '11 TKJ 6': [
       { code: 'S001', name: 'Siswa A' },
@@ -61,7 +61,7 @@ const CONFIG = {
       { code: 'S012', name: 'Siswa L' },
     ],
   },
-  
+
   academicPeriod: {
     name: '2026/2027',
     school_year: '2026/2027',
@@ -73,20 +73,20 @@ async function main() {
   console.log('===============================================');
   console.log('  SPK AHP-TOPSIS - Database Seeder (SAFE)');
   console.log('  Versi: Public-Ready (tanpa data sensitif)');
-  console.log('===============================================\n');
+  console.log('===============================================\\n');
 
   // Cek koneksi
   try {
     await prisma.$queryRaw`SELECT 1`;
-    console.log('[OK] Database connected.\n');
+    console.log('[OK] Database connected.\\n');
   } catch (err) {
     console.error('[FATAL] Database connection failed:', err);
     process.exit(1);
   }
 
   // IDEMPOTENT: Hapus data lama (hanya untuk development)
-  console.log('[INFO] Membersihkan data lama untuk idempotent seed...\n');
-  
+  console.log('[INFO] Membersihkan data lama untuk idempotent seed...\\n');
+
   await prisma.auditLog.deleteMany();
   await prisma.topsisCalculation.deleteMany();
   await prisma.ahpCalculation.deleteMany();
@@ -97,14 +97,14 @@ async function main() {
   await prisma.classRoom.deleteMany();
   await prisma.academicPeriod.deleteMany();
   await prisma.user.deleteMany();
-  console.log('[OK] Data lama dihapus.\n');
+  console.log('[OK] Data lama dihapus.\\n');
 
   // Buat akun RBAC
-  console.log('[INFO] Membuat akun RBAC...\n');
+  console.log('[INFO] Membuat akun RBAC...\\n');
 
   const adminPasswordHash = await bcrypt.hash(CONFIG.ADMIN_PASSWORD, 10);
   const guruPasswordHash = await bcrypt.hash(CONFIG.GURU_PASSWORD, 10);
-  const kepsekPasswordHash = await bcrypt.hash(CONFIG.KEPsek_PASSWORD, 10);
+  const kepsekPasswordHash = await bcrypt.hash(CONFIG.KEPSK_PASSWORD, 10);
 
   const admin = await prisma.user.create({
     data: {
@@ -134,10 +134,10 @@ async function main() {
       role: Role.KEPALA_SEKOLAH,
     },
   });
-  console.log(`  - Kepala Sekolah: ${kepsek.email} (password: ${CONFIG.KEPsek_PASSWORD})\n`);
+  console.log(`  - Kepala Sekolah: ${kepsek.email} (password: ${CONFIG.KEPSK_PASSWORD})\\n`);
 
   // Buat kriteria
-  console.log('[INFO] Membuat kriteria...\n');
+  console.log('[INFO] Membuat kriteria...\\n');
 
   const createdCriteria: Array<{ code: string; id: string }> = [];
 
@@ -157,7 +157,7 @@ async function main() {
   console.log('');
 
   // Buat periode akademik
-  console.log('[INFO] Membuat periode akademik...\n');
+  console.log('[INFO] Membuat periode akademik...\\n');
 
   const period = await prisma.academicPeriod.create({
     data: {
@@ -167,10 +167,10 @@ async function main() {
       is_active: true,
     },
   });
-  console.log(`  - Periode: ${period.name} (${period.semester}) [id=${period.id}]\n`);
+  console.log(`  - Periode: ${period.name} (${period.semester}) [id=${period.id}]\\n`);
 
   // Buat kelas dan siswa dummy
-  console.log('[INFO] Membuat kelas dan siswa dummy...\n');
+  console.log('[INFO] Membuat kelas dan siswa dummy...\\n');
 
   let totalStudents = 0;
 
@@ -212,11 +212,11 @@ async function main() {
       }
     }
 
-    console.log(`    Total: ${students.length} siswa\n`);
+    console.log(`    Total: ${students.length} siswa\\n`);
     totalStudents += students.length;
   }
 
-  console.log(`  Total siswa dummy: ${totalStudents}\n`);
+  console.log(`  Total siswa dummy: ${totalStudents}\\n`);
 
   console.log('===============================================');
   console.log('  SEEDING SELESAI (SAFE & IDEMPOTENT)');
@@ -224,16 +224,16 @@ async function main() {
   console.log(`  Periode: ${period.name} (${period.semester})`);
   console.log(`  Siswa: ${totalStudents}`);
   console.log(`  Kriteria: ${CONFIG.criteria.length}`);
-  console.log(`\n  Semua data DUMMY/ANONYMIZED`);
+  console.log(`\\n  Semua data DUMMY/ANONYMIZED`);
   console.log(`  File Excel tidak digunakan`);
-  console.log('===============================================\n');
+  console.log('===============================================\\n');
 
   await prisma.$disconnect();
 }
 
 main()
   .catch((err) => {
-    console.error('\n[FATAL] Error:', err);
+    console.error('\\n[FATAL] Error:', err);
     process.exit(1);
   })
   .finally(async () => {

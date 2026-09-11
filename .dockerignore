@@ -1,0 +1,43 @@
+# =============================================================================
+# Docker Build Context - SPK AHP-TOPSIS
+# =============================================================================
+# Patterns ini mencegah file tidak perlu ikut ke Docker build context,
+# mempercepat build dan mengurangi risiko kebocoran secret.
+# =============================================================================
+
+# Git metadata (tidak perlu di image)
+.git/
+.gitignore
+
+# Dependency lokal (akan di-install ulang di dalam Dockerfile)
+node_modules/
+**/node_modules/
+
+# Environment & secrets
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Build artifacts & cache
+.next/
+**/.next/
+dist/
+**/dist/
+coverage/
+**/coverage/
+frontend/out/
+frontend/build/
+*.tsbuildinfo
+
+# Logs & temporary
+*.log
+tmp/
+temp/
+
+# Dokumen project yang tidak dibutuhkan runtime
+docs/
+
+# Development local data
+data-development/
+.local-dev/

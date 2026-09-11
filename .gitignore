@@ -5,6 +5,7 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
 # =============================================================================
 # Build outputs
@@ -12,15 +13,21 @@ yarn-error.log*
 dist/
 .backend-dist/
 .frontend-dist/
+.next/
+out/
+build/
+*.tsbuildinfo
 
 # =============================================================================
 # Environment - JANGAN COMMIT
 # =============================================================================
 .env
-.env.local
-.env.*.local
-.env.production
-.env.staging
+.env.*
+!.env.example
+backend/.env
+frontend/.env.local
+.backend-local
+.frontend-local
 
 # =============================================================================
 # IDE & OS
@@ -33,7 +40,7 @@ dist/
 Thumbs.db
 
 # =============================================================================
-# Prisma
+# Prisma local database
 # =============================================================================
 prisma/*.db
 prisma/*.db-journal
@@ -46,39 +53,22 @@ coverage/
 .nyc_output/
 
 # =============================================================================
-# Temporary
+# Temporary / backup
 # =============================================================================
 tmp/
 temp/
+*.bak
 
 # =============================================================================
-# Dokumen sensitif - JANGAN COMMIT KE PUBLIC REPO
+# Credentials / keys
 # =============================================================================
-# File akademik dan skripsi
-SKRIPSI*
-*.docx
-*.doc
-skripsi_draft/
-referensi_skripsi/
-
-# Data siswa asli
-data_nilai/
-*.xlsx
-*.xls
-data-siswa/
-
-# Logo/asset sekolah resmi (di-perinci untuk public repo)
-logo-sekolah/
-assets/logo/
-assets/sekolah/
-
-# Credential dan secret
 secrets/
 credentials/
 *.pem
 *.key
 
-# File development lokal
+# =============================================================================
+# Project-local development data
+# =============================================================================
 data-development/
-thesis-source-local/
 .local-dev/
