@@ -191,6 +191,62 @@ export class TopsisService {
     }
 
     // 17. Simpan ke database (snapshot untuk reproducibility)
+    // Idempotent: jika sudah ada untuk period + AHP calculation ini, return existing
+    const existing = await this.prisma.topsisCalculation.findUnique({
+      where: {
+        academic_period_id_ahp_calculation_id: {
+          academic_period_id: dto.academic_period_id,
+          ahp_calculation_id: bobotResult.id,
+        },
+      },
+      include: {
+        academicPeriod: { select: { id: true, name: true } },
+        ahpCalculation: { select: { id: true, weight_vector: true, is_valid: true, ci: true, cr: true, ri: true } },
+        createdByUser: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    if (existing) {
+      // Kembalikan existing record sebagai TopsisResult
+      const rank = existing.rank as Record<string, number> ?? {};
+      const preferenceValue = existing.preference_value as Record<string, number> ?? {};
+      const ranking: Array<{ student_code: string; rank: number; nilai_preferensi: number }> = [];
+      const sortedKeys = Object.keys(rank).sort((a, b) => rank[a] - rank[b]);
+      for (const key of sortedKeys) {
+        ranking.push({
+          student_code: key,
+          rank: rank[key],
+          nilai_preferensi: preferenceValue[key] ?? 0,
+        });
+      }
+      return {
+        ranking,
+        summary: {
+          M: ranking.length,
+          N: n,
+          siswa_terlibat: ranking.length,
+          siswa_excluded_missing: 0,
+          list_siswa_excluded: [],
+          ahp_calculation_id: bobotResult.id,
+          academic_period_id: dto.academic_period_id,
+        },
+        snapshot: {
+          decision_matrix: existing.decision_matrix as Record<string, Record<string, number>> ?? {},
+          normalized_matrix: existing.normalized_matrix as Record<string, Record<string, number>> ?? {},
+          weighted_matrix: existing.weighted_matrix as Record<string, Record<string, number>> ?? {},
+          ideal_positive: existing.ideal_positive as Record<string, number> ?? {},
+          ideal_negative: existing.ideal_negative as Record<string, number> ?? {},
+          distance_positive: existing.distance_positive as Record<string, number> ?? {},
+          distance_negative: existing.distance_negative as Record<string, number> ?? {},
+          preference_value: existing.preference_value as Record<string, number> ?? {},
+          rank: rank,
+        },
+        id: existing.id,
+        academic_period_id: existing.academic_period_id,
+        calculated_at: existing.calculated_at,
+      };
+    }
+
     const topsisCalc = await this.prisma.topsisCalculation.create({
       data: {
         academic_period_id: dto.academic_period_id,
