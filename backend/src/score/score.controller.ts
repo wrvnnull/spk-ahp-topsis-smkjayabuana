@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   ForbiddenException,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ScoreService } from './score.service';
 import { CreateScoreDto } from './dto/create-score.dto';
@@ -18,9 +19,12 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
+import { Audit } from '../audit/audit.decorator';
+import { AuditInterceptor } from '../audit/audit.interceptor';
 
 @Controller('api/scores')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@UseInterceptors(AuditInterceptor)
 export class ScoreController {
   constructor(private readonly scoreService: ScoreService) {}
 
@@ -34,6 +38,7 @@ export class ScoreController {
 
   @Post()
   @Roles('SUPER_ADMIN', 'GURU')
+  @Audit({ resourceType: 'score' })
   async create(@Request() req: AuthenticatedRequest, @Body() dto: CreateScoreDto) {
     const user = req.user;
     if (!user) throw new ForbiddenException('Tidak terautentikasi');
@@ -42,6 +47,7 @@ export class ScoreController {
 
   @Post('bulk')
   @Roles('SUPER_ADMIN', 'GURU')
+  @Audit({ resourceType: 'score' })
   async bulkCreate(@Request() req: AuthenticatedRequest, @Body() dto: BulkScoresDto) {
     const user = req.user;
     if (!user) throw new ForbiddenException('Tidak terautentikasi');
@@ -50,6 +56,7 @@ export class ScoreController {
 
   @Patch(':id')
   @Roles('SUPER_ADMIN', 'GURU')
+  @Audit({ resourceType: 'score' })
   async update(
     @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
@@ -62,6 +69,7 @@ export class ScoreController {
 
   @Delete(':id')
   @Roles('SUPER_ADMIN', 'GURU')
+  @Audit({ resourceType: 'score' })
   async remove(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     const user = req.user;
     if (!user) throw new ForbiddenException('Tidak terautentikasi');

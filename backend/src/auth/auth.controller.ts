@@ -7,6 +7,7 @@ import {
   Res,
   UseGuards,
   UnauthorizedException,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -14,6 +15,8 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LoginDto } from './dto/login.dto';
 import { MeResponseDto } from './dto/me.dto';
 import { Request } from 'express';
+import { Audit } from '../audit/audit.decorator';
+import { AuditInterceptor } from '../audit/audit.interceptor';
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -28,6 +31,8 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('login')
+  @Audit({ resourceType: 'auth' })
+  @UseInterceptors(AuditInterceptor)
   async login(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true })
@@ -38,6 +43,8 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Audit({ resourceType: 'auth' })
+  @UseInterceptors(AuditInterceptor)
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -47,6 +54,8 @@ export class AuthController {
   }
 
   @Post('logout')
+  @Audit({ resourceType: 'auth' })
+  @UseInterceptors(AuditInterceptor)
   async logout(@Res({ passthrough: true }) res: Response) {
     await this.authService.logout(res);
   }

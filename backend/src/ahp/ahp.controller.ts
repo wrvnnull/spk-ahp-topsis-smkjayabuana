@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common';
 import { AhpService, AhpResult } from './ahp.service';
 import { CreateAhpComparisonDto } from './dto/create-ahp-comparison.dto';
@@ -8,9 +19,12 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { AuthenticatedRequest } from '../auth/interfaces/authenticated-request.interface';
+import { Audit } from '../audit/audit.decorator';
+import { AuditInterceptor } from '../audit/audit.interceptor';
 
 @Controller('api/ahp')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@UseInterceptors(AuditInterceptor)
 export class AhpController {
   constructor(private readonly ahpService: AhpService) {}
 
@@ -18,6 +32,7 @@ export class AhpController {
 
   @Post('comparisons')
   @Roles('SUPER_ADMIN')
+  @Audit({ resourceType: 'ahp_comparison' })
   createComparison(
     @Body() dto: CreateAhpComparisonDto,
     @Param() req: AuthenticatedRequest,
@@ -27,6 +42,7 @@ export class AhpController {
 
   @Post('comparisons/bulk')
   @Roles('SUPER_ADMIN')
+  @Audit({ resourceType: 'ahp_comparison' })
   bulkCreateComparisons(
     @Body() dto: BulkCreateAhpComparisonsDto,
     @Param() req: AuthenticatedRequest,
@@ -55,6 +71,7 @@ export class AhpController {
 
   @Post('calculate')
   @Roles('SUPER_ADMIN')
+  @Audit({ resourceType: 'ahp_calculation' })
   calculate(
     @Body() dto: AhpCalculateDto,
     @Param() req: AuthenticatedRequest,

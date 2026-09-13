@@ -5,10 +5,12 @@ import { CriteriaModule } from './criteria/criteria.module';
 import { AcademicPeriodModule } from './academic-period/academic-period.module';
 import { AhpModule } from './ahp/ahp.module';
 import { TopsisModule } from './topsis/topsis.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
     PrismaModule,
+    AuditModule,
     AuthModule,
     CriteriaModule,
     AcademicPeriodModule,
