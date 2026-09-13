@@ -6,6 +6,7 @@ import { AcademicPeriodModule } from './academic-period/academic-period.module';
 import { AhpModule } from './ahp/ahp.module';
 import { TopsisModule } from './topsis/topsis.module';
 import { AuditModule } from './audit/audit.module';
+import { StudentModule } from './student/student.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AuditModule } from './audit/audit.module';
     AcademicPeriodModule,
     AhpModule,
     TopsisModule,
+    StudentModule,
   ],
 })
 export class AppModule {}

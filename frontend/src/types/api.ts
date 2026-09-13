@@ -124,8 +124,19 @@ export interface TopsisCalculation {
 export interface TopsisRanking {
   id: string
   academic_period_id: string
+  academic_period_name?: string | null
+  calculated_at?: string
   rank: Record<string, number> | null
   preference_value: Record<string, number> | null
+  ahp?: {
+    id: string
+    weight_vector: Record<string, number>
+    is_valid: boolean
+    ci: number
+    cr: number | null
+    ri: number
+    lambda_max?: number
+  } | null
   academicPeriod?: AcademicPeriod | null
 }
 

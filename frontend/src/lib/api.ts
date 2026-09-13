@@ -287,8 +287,9 @@ class ApiClient {
     })
   }
 
-  async getTopsisRanking(): Promise<import("@/types/api").TopsisRanking[]> {
-    return this.request("/topsis/ranking")
+  async getTopsisRanking(academicPeriodId?: string): Promise<import("@/types/api").TopsisRanking[]> {
+    const query = academicPeriodId ? `?academic_period_id=${encodeURIComponent(academicPeriodId)}` : ""
+    return this.request(`/topsis/ranking${query}`)
   }
 
   async getTopsisCalculationById(id: string): Promise<import("@/types/api").TopsisCalculation> {
