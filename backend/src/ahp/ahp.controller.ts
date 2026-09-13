@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Req,
   Query,
   UseGuards,
   UseInterceptors,
@@ -35,7 +36,7 @@ export class AhpController {
   @Audit({ resourceType: 'ahp_comparison' })
   createComparison(
     @Body() dto: CreateAhpComparisonDto,
-    @Param() req: AuthenticatedRequest,
+    @Req() req: AuthenticatedRequest,
   ) {
     return this.ahpService.createComparison(dto, req.user!.userId);
   }
@@ -45,7 +46,7 @@ export class AhpController {
   @Audit({ resourceType: 'ahp_comparison' })
   bulkCreateComparisons(
     @Body() dto: BulkCreateAhpComparisonsDto,
-    @Param() req: AuthenticatedRequest,
+    @Req() req: AuthenticatedRequest,
   ) {
     return this.ahpService.bulkCreateComparisons(dto, req.user!.userId);
   }
@@ -74,7 +75,7 @@ export class AhpController {
   @Audit({ resourceType: 'ahp_calculation' })
   calculate(
     @Body() dto: AhpCalculateDto,
-    @Param() req: AuthenticatedRequest,
+    @Req() req: AuthenticatedRequest,
   ) {
     return this.ahpService.calculateAHP(dto, req.user!.userId);
   }

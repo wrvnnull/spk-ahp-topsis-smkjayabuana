@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Body,
+  Req,
   Param,
   Query,
   UseGuards,
@@ -28,7 +29,7 @@ export class TopsisController {
   @Audit({ resourceType: 'topsis_calculation' })
   calculate(
     @Body() dto: TopsisCalculateDto,
-    @Param() req: AuthenticatedRequest,
+    @Req() req: AuthenticatedRequest,
   ) {
     return this.topsisService.calculateTopsis(dto, req.user!.userId);
   }
@@ -43,7 +44,7 @@ export class TopsisController {
   @Roles('SUPER_ADMIN', 'KEPALA_SEKOLAH', 'GURU')
   async getRanking(
     @Query('academic_period_id') academicPeriodId: string,
-    @Param() req: AuthenticatedRequest,
+    @Req() req: AuthenticatedRequest,
   ) {
     // GURU hanya bisa melihat ranking untuk kelasnya sendiri
     if (req.user?.role === 'GURU') {
